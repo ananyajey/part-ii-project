@@ -17,6 +17,7 @@ import numpy as np
 from scipy.fftpack import fft
 import labels
 from labels import *
+from PIL import Image
 
 
 def processing(raw_folderpath, processed_folderpath):
@@ -79,7 +80,7 @@ def wav_to_spectrogram(wav_filepath, data_folderpath, window='hann', nperseg=256
         sample_width = wav_file.getsampwidth()
 
         clip_length = 4
-        img_height = 0.5
+        img_height = 5
         img_width = img_height*frame_count/(sample_rate*clip_length) # img_height*song_length/clip_length
 
         byte_data = wav_file.readframes(frame_count)
@@ -87,9 +88,9 @@ def wav_to_spectrogram(wav_filepath, data_folderpath, window='hann', nperseg=256
         #audio_data_unpacked = np.array(struct.unpack("h" * wav_file.getnframes(), wav_data_1))
         #sample_rate, data_arr = wavfile.read(wav_filepath)
 
-        x = fft(audio_data[:,0])
+        #x = fft(audio_data[:,0])
     
-    name = os.path.basename(wav_filepath).split('.')[0]
+    name = os.path.basename(wav_filepath)[:-4]
     genre = os.path.basename(os.path.split(wav_filepath)[0])
     uri = get_uri(name)
     
@@ -102,25 +103,27 @@ def wav_to_spectrogram(wav_filepath, data_folderpath, window='hann', nperseg=256
 
     elif (len(audio_data) == 2):
         frequencies_ch1, times_ch1, spectrogram_ch1 = signal.stft(x=audio_data[0], fs=sample_rate, window=window, nperseg=nperseg, nfft=nfft, return_onesided=True)#, mode='complex')
-        fig_ch1 = plt.figure(frameon=False, figsize=(img_width, img_height), dpi=1000)
-        im_1 = plt.pcolormesh(times_ch1, frequencies_ch1, spectrogram_ch1.real, shading='auto')
+        psd_ch1 = 10*np.log10(abs(spectrogram_ch1))
+        fig_ch1 = plt.figure(frameon=False, figsize=(img_width, img_height), dpi=100)
+        im_1 = plt.pcolormesh(times_ch1, frequencies_ch1, psd_ch1, shading='auto')
         plt.axis('off')
-        #plt.close()
+        plt.close()
         #fig_ch1.colorbar(im_1)
 
-        plt.show()
+        #plt.show()
 
         frequencies_ch2, times_ch2, spectrogram_ch2 = signal.stft(x=audio_data[1], fs=sample_rate)#, window=window, nperseg=nperseg, nfft=nfft)#, return_onesided=True), mode='magnitude')
-        fig_ch2 = plt.figure(frameon=False, figsize=(img_width, img_height), dpi=1000)
-        im_2 = plt.pcolormesh(times_ch2, frequencies_ch2, np.log2(spectrogram_ch2 + 1), shading='auto')
+        psd_ch2 = 10*np.log10(abs(spectrogram_ch2)+1)
+        fig_ch2 = plt.figure(frameon=False, figsize=(img_width, img_height), dpi=100)
+        im_2 = plt.pcolormesh(times_ch2, frequencies_ch2, psd_ch2, shading='auto')
         plt.axis('off')
-        #plt.close()
+        plt.close()
         #fig_ch2.colorbar(im_2)
 
-        plt.show()
+        #plt.show()
 
-        fig_ch1.savefig((data_folderpath + "/" + os.path.basename(wav_filepath).split('.')[0] + "_ch1.png"), bbox_inches = "tight", pad_inches = 0, dpi = 1000)
-        fig_ch2.savefig((data_folderpath + "/" + os.path.basename(wav_filepath).split('.')[0] + "_ch2.png"), bbox_inches = "tight", pad_inches = 0, dpi = 1000)
+        fig_ch1.savefig((data_folderpath + "/" + uri + "_ch1.png"), bbox_inches = "tight", pad_inches = 0, dpi = 100)
+        fig_ch2.savefig((data_folderpath + "/" + uri + "_ch2.png"), bbox_inches = "tight", pad_inches = 0, dpi = 100)
     
     else:
         raise ValueError('Invalid number of channels')
@@ -327,21 +330,19 @@ def augment(folderpath, graph_type):
     # TODO: implement
 
 
+def split_images(folderpath, savepath):
+    for filename in os.listdir(folderpath):
+        if filename.endswith('.png'):
+            #with open(os.path.join(folderpath, filename)) as file:
+            im = Image.open(os.path.join(folderpath, filename))
+            imgwidth, imgheight = im.size
+            print("{2} ___ width: {0}, height: {1}".format(imgwidth, imgheight, filename))
+            for i in range(0, imgwidth, imgheight):
+                box = (i, 0, i+imgheight, imgheight)
+                a = im.crop(box)
+                a.save("{0}/{1}_{2}.png".format(savepath, filename[:-4], int(i/imgheight)))
 
-add_label('a', 'b')
-add_label('c', 'd')
-print (labels)
- # type: ignore
-#wav_to_spectrogram("data/raw/baroque/Bach, JS_ Brandenburg Concerto No. 2 in F Major, BWV 1047_ I. — _ Johann Sebastian Bach, Mark Bennet.wav", "data/MFCCs")
-
-
-#wav_to_spectrogram("data/raw/10 Africa.wav", "data/spectrograms")
-#wav_to_spectrogram("data/raw/09 Orchestral Suite No. 3 in D Major, BWV 1068_ II. Air.wav", "data/spectrograms")
-#wav_to_spectrogram("data/raw/africa-toto.wav", "data/spectrograms")
-#wav_to_spectrogram("data/raw/file_example_MP3_1MG.mp3", "data/spectrograms")
-#wav_to_spectrogram("data/raw/qrss-10min.wav", "data/spectrograms")
-#wav_to_spectrogram("data/raw/xyz.mp3", "data/spectrograms")
-
+                
 
 #if samples.ndim >  1:
 #    samples = samples[:,0]
@@ -350,8 +351,9 @@ print (labels)
 
 
 
+#wav_to_spectrogram("data/raw/baroque/Bach, JS_ Brandenburg Concerto No. 2 in F Major, BWV 1047_ I. — _ Johann Sebastian Bach, Mark Bennet.wav", "data/spectrograms")
 
-
+split_images("data/spectrograms", "data/spectrograms/out")
 
 # PSEUDOCODE
 # ----------

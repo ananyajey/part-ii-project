@@ -1,11 +1,13 @@
 #vector = ['classical', 'rap', 'pop', 'hiphop', 'jazz'] #.....
 
+
+    
 vector = ['baroque', 'metal']
 
 labels = {}
 
 def get_uri(name):
-    uri_dict = {'Bach, JS_ Brandenburg Concerto No. 2 in F Major, BWV 1047_ I. — _ Johann Sebastian Bach, Mark Bennet' : 'track:3AKAAbFYypDMas1MV8Nhot',
+    uri_dict = {'Bach, JS_ Brandenburg Concerto No. 2 in F Major, BWV 1047_ I. — _ Johann Sebastian Bach, Mark Bennet' : '3AKAAbFYypDMas1MV8Nhot',
                 'Bach, JS_ Brandenburg Concerto No. 5 in D Major, BWV 1050_ II. Affettuoso _ Johann Sebastian Bach, E' : '2O348yjmVxXiR8UkiBkZ1O',
                 'Canon in D _ Johann Pachelbel, Kanon Orchestre de Chambre, Jean-François Paillard' : '1c3GkbZBnyrQ1cm4TGHFrK',
                 'Messiah, HWV 56 _ Pt. 2_ _Hallelujah_ _ George Frideric Handel, Academy of St Martin in the Fields C' : '4TNCQyG2gmepsGoeLdRKn4',
@@ -25,7 +27,7 @@ def get_label(uri):
     return labels[uri]
 
 def get_info(uri):
-    # TODO: implement
+# TODO: implement
     return
 
 #add_label('012', 'baroque')
