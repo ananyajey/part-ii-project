@@ -351,6 +351,7 @@ def split_images(folderpath, savepath):
 
 
 
+
 #wav_to_spectrogram("data/raw/baroque/Bach, JS_ Brandenburg Concerto No. 2 in F Major, BWV 1047_ I. — _ Johann Sebastian Bach, Mark Bennet.wav", "data/spectrograms")
 
 #split_images("data/spectrograms", "data/spectrograms/out")
