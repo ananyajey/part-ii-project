@@ -18,6 +18,12 @@ from scipy.fftpack import fft
 import labels
 from labels import *
 from PIL import Image
+from tinytag import TinyTag
+import spotipy as sp
+
+client_id = '5e59bf996e30412d802b50c56c23fbc1'
+client_secret = '7b221a486fcf4ea9a9246a3b1dfac445'
+spotifyObject = sp.Spotify(auth_manager=sp.oauth2.SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
 
 
 def processing(raw_folderpath, processed_folderpath):
@@ -37,6 +43,29 @@ def mp3_to_wav(filepath):
     sound = AudioSegment.from_mp3(filepath)
     new_path = "data/output/" + Path(filepath).stem + ".wav"
     return sound.export(new_path, format="wav")
+
+
+def get_uri(wav_filepath):
+    audio = TinyTag.get(wav_filepath)
+    title, artist, album = audio.title, audio.artist, audio.album
+
+    query = "remaster%20track:{0}%20artist:{1}%20album:{2}".format(title, artist, album)
+    search = (spotifyObject.search(query))['tracks']['items']
+    '''for item in search:
+        print("     " + item['name'])
+        for i in range(min(len(artist.split(',')), len(item['artists']))):
+            if (item['artists'][i]['name'] == artist.split(', ')[i]):
+                print("     Y: " + item['artists'][i]['name'])
+            else:
+                print("     N: " + item['artists'][i]['name'] + "/////" + artist.split(', ')[i])'''
+    
+    
+
+    #[0]['uri'].split(':')[2]
+    return search
+    # TODO: compare titles, artists, and albums
+    # TODO: deal with none cases
+    # TODO: informative error message if it doesnt work
 
 
 def wav_to_spectrogram(wav_filepath, data_folderpath, window='hann', nperseg=256, nfft=None, return_onesided=True, mode=None): 
@@ -342,13 +371,23 @@ def split_images(folderpath, savepath):
                 a = im.crop(box)
                 a.save("{0}/{1}_{2}.png".format(savepath, filename[:-4], int(i/imgheight)))
 
-                
+
+
+wav_to_MFCC("data/raw/baroque/Canon in D.wav", "")
+
+
+
+
+
+
+
+
+
+
+
 
 #if samples.ndim >  1:
 #    samples = samples[:,0]
-
-
-
 
 
 
