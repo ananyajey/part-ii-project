@@ -26,6 +26,10 @@ client_secret = '7b221a486fcf4ea9a9246a3b1dfac445'
 spotifyObject = sp.Spotify(auth_manager=sp.oauth2.SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
 
 
+# TODO: organize imports
+# TODO: check parameters and descriptions
+
+
 def processing(raw_folderpath, processed_folderpath):
     """
     Parameters
@@ -68,7 +72,7 @@ def get_uri(wav_filepath):
     # TODO: informative error message if it doesnt work
 
 
-def wav_to_spectrogram(wav_filepath, data_folderpath, window='hann', nperseg=256, nfft=None, return_onesided=True, mode=None): 
+def wav_to_spectrogram(wav_filepath, data_folderpath, window='hann', nperseg=256, nfft=None, return_onesided=True, mode=None, display=False): 
 
     """
     Parameters
@@ -168,9 +172,11 @@ def wav_to_spectrogram(wav_filepath, data_folderpath, window='hann', nperseg=256
     else:
         #raise ValueError()
         im = plt.pcolormesh(times, frequencies, spectrogram.real, shading='auto')
+    
+    # TODO: display
 
 
-def wav_to_chromagram(wav_filepath, data_folderpath): 
+def wav_to_chromagram(wav_filepath, data_folderpath, display=False): 
 
     """
     Parameters
@@ -181,8 +187,40 @@ def wav_to_chromagram(wav_filepath, data_folderpath):
     data_folderpath: Path
         The path to the folder in which the chromagram will be stored.
     """
-    # TODO: implement
 
+    with wave.open(wav_filepath, "rb") as wav_file:
+        frame_count = wav_file.getnframes()
+        channel_count = wav_file.getnchannels()
+        sample_rate = wav_file.getframerate()
+        sample_width = wav_file.getsampwidth()
+
+        clip_length = 4
+        img_height = 5
+        img_width = img_height*frame_count/(sample_rate*clip_length) # img_height*song_length/clip_length
+
+        y, sr = librosa.load(wav_filepath, duration=frame_count/sample_rate)
+        
+        byte_data = wav_file.readframes(frame_count)
+        audio_data = np.frombuffer(byte_data, dtype=np.int16).reshape((frame_count, channel_count)).T
+        
+    chromagram = librosa.feature.chroma_stft(y=y, sr=sr)
+
+    S = np.abs(librosa.stft(y))
+    chroma = librosa.feature.chroma_stft(S=S, sr=sr)
+
+    if display:
+        fig, ax = plt.subplots(nrows=2, sharex=True)
+        img = librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+                                    y_axis='log', x_axis='time', ax=ax[0])
+        fig.colorbar(img, ax=[ax[0]])
+        ax[0].label_outer()
+        img = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax[1])
+        fig.colorbar(img, ax=[ax[1]])
+        plt.show()
+
+    # TODO: choose what kind of chromagram
+    # TODO: save image
+    
 
 def wav_to_MFCC(wav_filepath, data_folderpath): 
 
@@ -315,6 +353,10 @@ def wav_to_MFCC(wav_filepath, data_folderpath):
     plt.show()
     return
     
+    # TODO: modify
+    # TODO: display
+    # TODO: save image
+    
        
 def wav_to_cochleagram(wav_filepath, data_folderpath): 
 
@@ -327,7 +369,10 @@ def wav_to_cochleagram(wav_filepath, data_folderpath):
     data_folderpath: Path
         The path to the folder in which the cochleagram will be stored.
     """
+    
     # TODO: implement
+    # TODO: display
+    # TODO: save image
 
 
 def generate_images(raw_folderpath, processed_folderpath, image_type):
@@ -343,6 +388,7 @@ def generate_images(raw_folderpath, processed_folderpath, image_type):
     image_type
         The type of graph (spectrogram, chromagram, MFCC, cochleagram) to be generated
     """
+    
     # TODO: implement
 
 
@@ -356,6 +402,7 @@ def augment(folderpath, graph_type):
     graph_type: String
         The type of visualization contained in the folder folderpath (spectrogram, chromagram, MFCC, cochleagram)
     """
+    
     # TODO: implement
 
 
@@ -373,7 +420,7 @@ def split_images(folderpath, savepath):
 
 
 
-wav_to_MFCC("data/raw/baroque/Canon in D.wav", "")
+#wav_to_MFCC("data/raw/baroque/Canon in D.wav", "")
 
 
 
