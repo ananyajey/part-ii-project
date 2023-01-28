@@ -20,11 +20,14 @@ from labels import *
 from PIL import Image
 from tinytag import TinyTag
 import spotipy as sp
+import warnings
+import random
 
 client_id = '5e59bf996e30412d802b50c56c23fbc1'
 client_secret = '7b221a486fcf4ea9a9246a3b1dfac445'
 spotifyObject = sp.Spotify(auth_manager=sp.oauth2.SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
 
+labels = ['baroque', 'golden age hip hop']
 
 # TODO: organize imports
 # TODO: check parameters and descriptions
@@ -50,24 +53,42 @@ def mp3_to_wav(filepath):
 
 
 def get_uri(wav_filepath):
+    """
+    Parameters
+    ----------
+    wav_filepath: str or pathlib.Path
+        The path to the audio file
+    """
     audio = TinyTag.get(wav_filepath)
     title, artist, album = audio.title, audio.artist, audio.album
+    #title, artist, album = " ".join(audio.title.split('_')), audio.artist, audio.album
 
-    query = "remaster%20track:{0}%20artist:{1}%20album:{2}".format(title, artist, album)
-    search = (spotifyObject.search(query))['tracks']['items']
+    try:
+        query = "remaster%20track:{0}%20artist:{1}%20album:{2}".format(''.join(title.split(':')), artist, album)
+        #query = "remaster%20track:{0}%20album:{2}".format(''.join(title.split(':')), artist, album)
+        search = (spotifyObject.search(query, limit = 50))['tracks']['items']
+    except:
+        query = "remaster%20track:{0}%20album:{1}".format(''.join(title.split('_')), album)
+        search = (spotifyObject.search(query))['tracks']['items']
     '''for item in search:
         print("     " + item['name'])
-        for i in range(min(len(artist.split(',')), len(item['artists']))):
+        for i in range(min(len(artist.split(',')), len(item['artists']))): 
             if (item['artists'][i]['name'] == artist.split(', ')[i]):
                 print("     Y: " + item['artists'][i]['name'])
             else:
                 print("     N: " + item['artists'][i]['name'] + "/////" + artist.split(', ')[i])'''
     
-    
+    for item in search:
+        title_search = item['name']
+        artist_search = ', '.join([item['artists'][i]['name'] for i in range(len(item['artists']))])
+        album_search = item['album']['name']
+        if (title == title_search):
+            if (album == album_search):
+                return item['uri'].split(':')[2]
 
-    #[0]['uri'].split(':')[2]
-    return search
-    # TODO: compare titles, artists, and albums
+    
+    return "NONE" + str(int(np.random.rand()*100))#search[0]['uri'].split(':')[2]
+    
     # TODO: deal with none cases
     # TODO: informative error message if it doesnt work
 
@@ -125,7 +146,7 @@ def wav_to_spectrogram(wav_filepath, data_folderpath, window='hann', nperseg=256
     
     name = os.path.basename(wav_filepath)[:-4]
     genre = os.path.basename(os.path.split(wav_filepath)[0])
-    uri = get_uri(name)
+    uri = get_uri(wav_filepath)
     
     if (len(audio_data) == 1): # use channel count?
         frequencies, times, spectrogram = signal.stft(x=audio_data[0], fs=sample_rate)#, window=window, nperseg=nperseg, nfft=nfft)
@@ -155,8 +176,10 @@ def wav_to_spectrogram(wav_filepath, data_folderpath, window='hann', nperseg=256
 
         #plt.show()
 
-        fig_ch1.savefig((data_folderpath + "/" + uri + "_ch1.png"), bbox_inches = "tight", pad_inches = 0, dpi = 100)
-        fig_ch2.savefig((data_folderpath + "/" + uri + "_ch2.png"), bbox_inches = "tight", pad_inches = 0, dpi = 100)
+        label = str(np.where(np.asarray(labels)==genre)[0])
+
+        fig_ch1.savefig((data_folderpath + "/" + uri + "_" + "_ch1.png"), bbox_inches = "tight", pad_inches = 0, dpi = 100)
+        fig_ch2.savefig((data_folderpath + "/" + uri + "_" + "_ch2.png"), bbox_inches = "tight", pad_inches = 0, dpi = 100)
     
     else:
         raise ValueError('Invalid number of channels')
@@ -379,16 +402,49 @@ def generate_images(raw_folderpath, processed_folderpath, image_type):
     """
     Parameter
     ---------
-    raw_folderpath:Path
+    raw_folderpath: string or pathlib.Path
         The path to the folder containing raw audio files to be converted into images
     
-    processed_folderpath: Path
+    processed_folderpath: string or pathlib.Path
         The path to the folder which will contain the generated images
     
-    image_type
+    image_type: string
         The type of graph (spectrogram, chromagram, MFCC, cochleagram) to be generated
     """
+
+    def to_image():
+        if (image_type == "spectrogram"):
+            for filename in os.listdir(raw_folderpath):
+                wav_to_spectrogram(os.path.join(raw_folderpath, filename), processed_folderpath)
+            
+        elif (image_type == "chromagram"):
+            for filename in os.listdir(raw_folderpath):
+                wav_to_chromagram(os.path.join(raw_folderpath, filename), processed_folderpath)
+        
+        elif (image_type == "mfcc"):
+            for filename in os.listdir(raw_folderpath):
+                wav_to_MFCC(os.path.join(raw_folderpath, filename), processed_folderpath)
+        
+        elif (image_type == "cochleagram"):
+            for filename in os.listdir(raw_folderpath):
+                wav_to_cochleagram(os.path.join(raw_folderpath, filename), processed_folderpath)
+        
+        else:
+            raise ValueError("{0} is not a valid image type.".format(image_type))
+
+
+
+    if (any(os.path.isdir(os.path.join(raw_folderpath, item)) for item in (os.listdir(raw_folderpath)))):
+        for item in os.listdir(raw_folderpath):
+            if os.path.isdir(os.path.join(raw_folderpath, item)):
+                os.mkdir(os.path.join(processed_folderpath, item))
+                generate_images(os.path.join(raw_folderpath, item), os.path.join(processed_folderpath, item), image_type)
+            else:#if os.path.isfile(item):
+                to_image()
     
+    else:
+        to_image()
+
     # TODO: implement
 
 
@@ -407,6 +463,19 @@ def augment(folderpath, graph_type):
 
 
 def split_images(folderpath, savepath):
+    """
+    Parameters
+    ----------
+    folderpath: string or pathlib.Path
+        The path containing the uncropped visualization files
+
+    savepath: string or pathlib.Path
+        The path in which the split images will be saved
+    """
+
+    # As of the current implementation, the final images will have dimensions n x n, where n is the height of the original image. If the 
+    # last image does not have these dimensions, it will be discarded.
+
     for filename in os.listdir(folderpath):
         if filename.endswith('.png'):
             #with open(os.path.join(folderpath, filename)) as file:
@@ -414,19 +483,61 @@ def split_images(folderpath, savepath):
             imgwidth, imgheight = im.size
             print("{2} ___ width: {0}, height: {1}".format(imgwidth, imgheight, filename))
             for i in range(0, imgwidth, imgheight):
-                box = (i, 0, i+imgheight, imgheight)
-                a = im.crop(box)
-                a.save("{0}/{1}_{2}.png".format(savepath, filename[:-4], int(i/imgheight)))
+                if (i + imgheight <= imgwidth):
+                    box = (i, 0, i+imgheight, imgheight)
+                    a = im.crop(box)
+                    a.save("{0}/{1}_{2}.png".format(savepath, filename[:-4], int(i/imgheight)))
+    
+    # TODO: structure directory
+    # TODO: Sanity checks
 
 
+def img_to_np(filepath):
+    image = Image.open(filepath)
+    data = np.asarray(image)
+    label = os.path.basename(filepath).split('_')[1]
+    print(np.asarray(label))
+    return data, label
+    
 
-#wav_to_MFCC("data/raw/baroque/Canon in D.wav", "")
+def label_images(folderpath):
+    labels = {}
+    dir_list = os.listdir(folderpath)
+    random.shuffle(dir_list)
+    for item in dir_list:
+        if os.path.isdir(os.path.join(folderpath, item)):
+            labels.update(label_images(os.path.join(folderpath, item)))
+        elif os.path.isfile(os.path.join(folderpath, item)):
+            if (item.lower().endswith(('.png', '.jpg', '.jpeg'))):
+                image = Image.open(item)
+                data = np.asarray(image)
+                label = str(np.where(np.asarray(labels)==os.path.basename(os.path.normpath(folderpath)))[0])
+                labels[data] = label
+            else:
+                raise ValueError("Incorrect file type.")
+    
+    random.shuffle(labels)
+    return labels
+
+    
 
 
+            
+
+#img_to_np("data\images_split\spectrograms/0ON4FYmS4Zch1NV0lhv9hX_ch1_0.png")
+
+#wav_to_spectrogram("data/raw/baroque\Castor et Pollux (1754 version)_ Act II Scene 1_ (Troupe de Spartiates).wav", "")
+
+#wav_to_spectrogram("data/raw/baroque/Canon in D major.wav", "")
+
+generate_images("data/raw", "data\images_initial", "spectrogram")
+
+split_images("")
 
 
+#    wav_to_spectrogram(("data/raw/baroque/" + filename), "data/images_initial/spectrograms")
 
-
+#split_images("data/images_initial/spectrograms", "data/images_split/spectrograms")
 
 
 
@@ -473,4 +584,4 @@ def split_images(folderpath, savepath):
 #       convert file to visual
 #       split into sections
 #       sanity check
-#       save to correct folder
+#       save to correct folder 
