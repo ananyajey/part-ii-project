@@ -15,8 +15,8 @@ from scipy.io import wavfile
 import librosa
 import numpy as np
 from scipy.fftpack import fft
-import labels
-from labels import *
+#import labels
+#from labels import *
 from PIL import Image
 from tinytag import TinyTag
 import spotipy as sp
@@ -69,7 +69,7 @@ def get_uri(wav_filepath):
         search = (spotifyObject.search(query, limit = 50))['tracks']['items']
     except:
         query = "remaster%20track:{0}%20album:{1}".format(''.join(title.split('_')), album)
-        search = (spotifyObject.search(query))['tracks']['items']
+        search = (spotifyObject.search(query, limit = 50))['tracks']['items']
     '''for item in search:
         print("     " + item['name'])
         for i in range(min(len(artist.split(',')), len(item['artists']))): 
@@ -87,7 +87,7 @@ def get_uri(wav_filepath):
                 return item['uri'].split(':')[2]
 
     
-    return "NONE" + str(int(np.random.rand()*100))#search[0]['uri'].split(':')[2]
+    return title #search[0]['uri'].split(':')[2]
     
     # TODO: deal with none cases
     # TODO: informative error message if it doesnt work
@@ -157,7 +157,7 @@ def wav_to_spectrogram(wav_filepath, data_folderpath, window='hann', nperseg=256
 
     elif (len(audio_data) == 2):
         frequencies_ch1, times_ch1, spectrogram_ch1 = signal.stft(x=audio_data[0], fs=sample_rate, window=window, nperseg=nperseg, nfft=nfft, return_onesided=True)#, mode='complex')
-        psd_ch1 = 10*np.log10(abs(spectrogram_ch1))
+        psd_ch1 = 10*np.log10(abs(spectrogram_ch1)+1)
         fig_ch1 = plt.figure(frameon=False, figsize=(img_width, img_height), dpi=100)
         im_1 = plt.pcolormesh(times_ch1, frequencies_ch1, psd_ch1, shading='auto')
         plt.axis('off')
@@ -412,22 +412,18 @@ def generate_images(raw_folderpath, processed_folderpath, image_type):
         The type of graph (spectrogram, chromagram, MFCC, cochleagram) to be generated
     """
 
-    def to_image():
+    def to_image(filepath):
         if (image_type == "spectrogram"):
-            for filename in os.listdir(raw_folderpath):
-                wav_to_spectrogram(os.path.join(raw_folderpath, filename), processed_folderpath)
+            wav_to_spectrogram(filepath, processed_folderpath)
             
         elif (image_type == "chromagram"):
-            for filename in os.listdir(raw_folderpath):
-                wav_to_chromagram(os.path.join(raw_folderpath, filename), processed_folderpath)
+            wav_to_chromagram(filepath, processed_folderpath)
         
         elif (image_type == "mfcc"):
-            for filename in os.listdir(raw_folderpath):
-                wav_to_MFCC(os.path.join(raw_folderpath, filename), processed_folderpath)
+            wav_to_MFCC(filepath, processed_folderpath)
         
         elif (image_type == "cochleagram"):
-            for filename in os.listdir(raw_folderpath):
-                wav_to_cochleagram(os.path.join(raw_folderpath, filename), processed_folderpath)
+            wav_to_cochleagram(filepath, processed_folderpath)
         
         else:
             raise ValueError("{0} is not a valid image type.".format(image_type))
@@ -440,10 +436,11 @@ def generate_images(raw_folderpath, processed_folderpath, image_type):
                 os.mkdir(os.path.join(processed_folderpath, item))
                 generate_images(os.path.join(raw_folderpath, item), os.path.join(processed_folderpath, item), image_type)
             else:#if os.path.isfile(item):
-                to_image()
+                to_image(os.path.join(raw_folderpath, item))
     
     else:
-        to_image()
+        for item in os.listdir(raw_folderpath):
+            to_image(os.path.join(raw_folderpath, item))
 
     # TODO: implement
 
@@ -476,17 +473,18 @@ def split_images(folderpath, savepath):
     # As of the current implementation, the final images will have dimensions n x n, where n is the height of the original image. If the 
     # last image does not have these dimensions, it will be discarded.
 
-    for filename in os.listdir(folderpath):
-        if filename.endswith('.png'):
-            #with open(os.path.join(folderpath, filename)) as file:
-            im = Image.open(os.path.join(folderpath, filename))
-            imgwidth, imgheight = im.size
-            print("{2} ___ width: {0}, height: {1}".format(imgwidth, imgheight, filename))
-            for i in range(0, imgwidth, imgheight):
-                if (i + imgheight <= imgwidth):
-                    box = (i, 0, i+imgheight, imgheight)
-                    a = im.crop(box)
-                    a.save("{0}/{1}_{2}.png".format(savepath, filename[:-4], int(i/imgheight)))
+    def split():
+        for filename in os.listdir(folderpath):
+            if filename.endswith('.png'):
+                #with open(os.path.join(folderpath, filename)) as file:
+                im = Image.open(os.path.join(folderpath, filename))
+                imgwidth, imgheight = im.size
+                print("{2} ___ width: {0}, height: {1}".format(imgwidth, imgheight, filename))
+                for i in range(0, imgwidth, imgheight):
+                    if (i + imgheight <= imgwidth):
+                        box = (i, 0, i+imgheight, imgheight)
+                        a = im.crop(box)
+                        a.save("{0}/{1}_{2}.png".format(savepath, filename[:-4], int(i/imgheight)))
     
     # TODO: structure directory
     # TODO: Sanity checks
@@ -530,9 +528,9 @@ def label_images(folderpath):
 
 #wav_to_spectrogram("data/raw/baroque/Canon in D major.wav", "")
 
-generate_images("data/raw", "data\images_initial", "spectrogram")
+#generate_images("data/raw", "data\images_initial", "spectrogram")
 
-split_images("")
+split_images("data\images_initial", "data\images_split")
 
 
 #    wav_to_spectrogram(("data/raw/baroque/" + filename), "data/images_initial/spectrograms")
