@@ -1,5 +1,44 @@
 #vector = ['classical', 'rap', 'pop', 'hiphop', 'jazz'] #.....
 
+import numpy as np
+import PIL
+from PIL import Image
+import os
+
+
+
+def image_to_array(image_filepath):
+    """
+    Parameters
+    ----------
+    image_filepath: Path
+        The path to the image files
+    
+    Returns
+    -------
+    img_array, img_label
+        Tuple containing the converted numpy array of the image and its feature vector
+    """
+
+    def get_vector(genre):
+        genre_set = ['pop', 'jazz', 'rock', 'hip hop', 'baroque']
+        return [int(genre == item) for item in genre_set]
+
+    image = Image.open(image_filepath)
+    img_array = np.asarray(image)
+    img_label = get_vector(os.path.split(os.path.split(image_filepath)[0])[1])
+    return img_array, img_label
+
+x, y = image_to_array("data\images_initial/20s3FayrStM8GY0m4dRFsw__ch1.png")
+
+print(x)
+print(y)
+
+
+
+
+
+'''
 
     
 vector = ['baroque', 'metal']
@@ -36,3 +75,6 @@ def get_info(uri):
 
 #add_label('012', 'baroque')
 #print(labels)
+
+
+'''
