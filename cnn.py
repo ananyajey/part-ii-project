@@ -1,9 +1,10 @@
 #vector = ['classical', 'rap', 'pop', 'hiphop', 'jazz'] #.....
 
 import numpy as np
-import PIL
+#import PIL
 from PIL import Image
 import os
+import random
 
 
 
@@ -29,12 +30,37 @@ def image_to_array(image_filepath):
     img_label = get_vector(os.path.split(os.path.split(image_filepath)[0])[1])
     return img_array, img_label
 
-x, y = image_to_array("data\images_initial/20s3FayrStM8GY0m4dRFsw__ch1.png")
 
-print(x)
-print(y)
+def load_data(data_folderpath):
+    data = {}
+    for item in os.listdir(data_folderpath):
+        item_path = os.path.join(data_folderpath, item)
+        if os.path.isdir(item_path):
+            data.update(load_data(item_path))
+        if os.path.isfile(item_path):
+            a, l = image_to_array(item_path)
+            data[a] = l
+    
+    return data
+
+def split_data(data_dict, percentage = 0.8):
+    random.shuffle(data_dict)
+    return data_dict
 
 
+#x, y = image_to_array("data\images_initial/baroque/2O348yjmVxXiR8UkiBkZ1O__ch1.png")
+
+#print(x)
+#print(y)
+
+sample_dict = {}
+sample_dict[0] = 0
+sample_dict[1] = 1
+sample_dict[2] = 2
+sample_dict[3] = 3
+sample_dict[4] = 4
+
+print(split_data(sample_dict))
 
 
 
