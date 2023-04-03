@@ -93,7 +93,7 @@ def get_uri(wav_filepath):
     # TODO: informative error message if it doesnt work
 
 
-def wav_to_spectrogram(wav_filepath, data_folderpath, window='hann', nperseg=256, nfft=None, return_onesided=True, mode=None, display=False): 
+def wav_to_spectrogram(wav_filepath, data_folderpath, display=False): #, window='hann', nperseg=256, nfft=None, return_onesided=True, mode=None, display=False): 
 
     """
     Parameters
@@ -121,8 +121,8 @@ def wav_to_spectrogram(wav_filepath, data_folderpath, window='hann', nperseg=256
 
     """
     # STFT config
-    if nfft == None:
-        nfft = nperseg
+    '''if nfft == None:
+        nfft = nperseg'''
 
     
 
@@ -156,7 +156,7 @@ def wav_to_spectrogram(wav_filepath, data_folderpath, window='hann', nperseg=256
         fig.savefig((data_folderpath + "/" + os.path.basename(wav_filepath).split('.')[0] + ".png"), bbox_inches = "tight", pad_inches = 0)
 
     elif (len(audio_data) == 2):
-        frequencies_ch1, times_ch1, spectrogram_ch1 = signal.stft(x=audio_data[0], fs=sample_rate, window=window, nperseg=nperseg, nfft=nfft, return_onesided=True)#, mode='complex')
+        frequencies_ch1, times_ch1, spectrogram_ch1 = signal.stft(x=audio_data[0], fs=sample_rate)#, window=window, nperseg=nperseg, nfft=nfft, return_onesided=True)#, mode='complex')
         psd_ch1 = 10*np.log10(abs(spectrogram_ch1)+1)
         fig_ch1 = plt.figure(frameon=False, figsize=(img_width, img_height), dpi=100)
         im_1 = plt.pcolormesh(times_ch1, frequencies_ch1, psd_ch1, shading='auto')
@@ -245,7 +245,7 @@ def wav_to_chromagram(wav_filepath, data_folderpath, display=False):
     # TODO: save image
     
 
-def wav_to_MFCC(wav_filepath, data_folderpath): 
+def wav_to_mfcc(wav_filepath, data_folderpath): 
 
     """
     Parameters
@@ -488,14 +488,6 @@ def split_images(folderpath, savepath):
     
     # TODO: structure directory
     # TODO: Sanity checks
-
-
-def img_to_np(filepath):
-    image = Image.open(filepath)
-    data = np.asarray(image)
-    label = os.path.basename(filepath).split('_')[1]
-    print(np.asarray(label))
-    return data, label
     
 
 def label_images(folderpath):
@@ -521,21 +513,8 @@ def label_images(folderpath):
 
 
             
+#wav_to_spectrogram("data/raw/baroque\Canon in D major.wav", "data\images")
 
-#img_to_np("data\images_split\spectrograms/0ON4FYmS4Zch1NV0lhv9hX_ch1_0.png")
-
-#wav_to_spectrogram("data/raw/baroque\Castor et Pollux (1754 version)_ Act II Scene 1_ (Troupe de Spartiates).wav", "")
-
-#wav_to_spectrogram("data/raw/baroque/Canon in D major.wav", "")
-
-#generate_images("data/raw", "data\images_initial", "spectrogram")
-
-split_images("data\images_initial", "data\images_split")
-
-
-#    wav_to_spectrogram(("data/raw/baroque/" + filename), "data/images_initial/spectrograms")
-
-#split_images("data/images_initial/spectrograms", "data/images_split/spectrograms")
 
 
 

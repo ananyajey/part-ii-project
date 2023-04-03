@@ -37,20 +37,49 @@ def load_data(data_folderpath):
     ----------
     
     """
-    data = {}
+    data = []
     for item in os.listdir(data_folderpath):
         item_path = os.path.join(data_folderpath, item)
         if os.path.isdir(item_path):
-            data.update(load_data(item_path))
+            data.extend(load_data(item_path))
         if os.path.isfile(item_path):
-            a, l = image_to_array(item_path)
-            data[a] = l
+            #a, l = image_to_array(item_path)
+            data.append(image_to_array(item_path))
     
     return data
 
-def split_data(data_dict, percentage = 0.8):
-    random.shuffle(data_dict)
-    return data_dict
+
+def split_data(data_list, percentage = 0.8):
+    """
+    Parameters
+    ----------
+    data_list: 
+        List of tuples containing 
+
+    Returns
+    -------
+    train_images: list
+        List of numpy arrays for trainimg images
+    train_labels: list
+        List of feature vectors for the corresponding training images
+    test_images: list
+        List of numpy arrays for testing images
+    test_labels: list
+        List of feature vectors for the corresponding testing images
+    """
+    random.shuffle(data_list)
+    images = list(list(zip(*l))[0])
+    labels = list(list(zip(*l))[1])
+    print(type(images))
+
+    cutoff = int(percentage * len(images))
+    return images[:cutoff], labels[:cutoff], images[cutoff:], labels[cutoff:]
+
+    #return train_images, train_labels, test_images, test_labels
+
+
+
+
 
 
 #x, y = image_to_array("data\images_initial/baroque/2O348yjmVxXiR8UkiBkZ1O__ch1.png")
@@ -58,14 +87,22 @@ def split_data(data_dict, percentage = 0.8):
 #print(x)
 #print(y)
 
-sample_dict = {}
-sample_dict[0] = 0
-sample_dict[1] = 1
-sample_dict[2] = 2
-sample_dict[3] = 3
-sample_dict[4] = 4
 
-print(split_data(sample_dict))
+'''l = []
+
+l.append((1, 'a'))
+l.append((2, 'b'))
+l.append((3, 'c'))
+l.append((4, 'd'))
+
+print(split_data(l)[0])'''
+'''
+print(list(zip(*l))[0])
+print(list(zip(*l))[1])
+
+print(list(zip(*l)))'''
+
+#print(split_data(sample_dict))
 
 
 
@@ -141,8 +178,8 @@ def DFT_slow(x):
     return np.dot(M, x)
 
 
-print(DFT_slow([1, 2, 3]))
-print(np.fft.fft([1,2,3]))
+#print(DFT_slow([1, 2, 3]))
+#print(np.fft.fft([1,2,3]))
 
 
 
